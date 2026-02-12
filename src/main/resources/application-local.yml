@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/musicdb
+    username: postgres
+    password: admin
+
+security:
+  jwt:
+    secret: music-api-secret-key-change-this
