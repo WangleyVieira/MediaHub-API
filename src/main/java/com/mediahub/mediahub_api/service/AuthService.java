@@ -1,8 +1,6 @@
 package com.mediahub.mediahub_api.service;
 
-import com.mediahub.mediahub_api.dto.AuthResponse;
-import com.mediahub.mediahub_api.dto.LoginRequest;
-import com.mediahub.mediahub_api.dto.UserResponse;
+import com.mediahub.mediahub_api.dto.*;
 import com.mediahub.mediahub_api.model.User;
 import com.mediahub.mediahub_api.repository.UserRepository;
 import com.mediahub.mediahub_api.security.JwtService;
@@ -27,7 +25,8 @@ public class AuthService {
             throw new RuntimeException("Invalid credentials");
         }
 
-        String token = jwtService.generateToken(user.getEmail());
+        String accessToken = jwtService.generateAccessToken(user.getEmail());
+        String refreshToken = jwtService.generateRefreshToken(user.getEmail());
 
         UserResponse userResponse = new UserResponse(
                 user.getId(),
@@ -38,9 +37,29 @@ public class AuthService {
         );
 
         return new AuthResponse(
-                token,
-                jwtService.expiration(),
+                accessToken,
+                refreshToken,
+                jwtService.getAccessTokenInSeconds(),
                 userResponse
+        );
+    }
+
+    public RefreshTokenResponse refreshToken(RefreshTokenRequest  refreshTokenRequest) {
+
+        String email = jwtService.extractUsername(refreshTokenRequest.refreshToken());
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!jwtService.isTokenValid(refreshTokenRequest.refreshToken(), user.getEmail())) {
+            throw new RuntimeException("Invalid refresh token");
+        }
+
+        String refreshToken = jwtService.generateAccessToken(user.getEmail());
+
+        return new RefreshTokenResponse(
+                refreshToken,
+                jwtService.getAccessTokenInSeconds()
         );
     }
 }
