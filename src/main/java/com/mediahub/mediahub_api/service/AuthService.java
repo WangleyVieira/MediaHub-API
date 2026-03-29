@@ -1,6 +1,10 @@
 package com.mediahub.mediahub_api.service;
 
-import com.mediahub.mediahub_api.dto.*;
+import com.mediahub.mediahub_api.dto.request.LoginRequest;
+import com.mediahub.mediahub_api.dto.request.RefreshTokenRequest;
+import com.mediahub.mediahub_api.dto.response.AuthResponse;
+import com.mediahub.mediahub_api.dto.response.RefreshTokenResponse;
+import com.mediahub.mediahub_api.dto.response.UserResponse;
 import com.mediahub.mediahub_api.model.User;
 import com.mediahub.mediahub_api.repository.UserRepository;
 import com.mediahub.mediahub_api.security.JwtService;
@@ -16,7 +20,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
-    public AuthResponse login(LoginRequest  loginRequest) {
+    public AuthResponse login(LoginRequest loginRequest) {
 
         User user = userRepository.findByEmail(loginRequest.email())
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -44,7 +48,7 @@ public class AuthService {
         );
     }
 
-    public RefreshTokenResponse refreshToken(RefreshTokenRequest  refreshTokenRequest) {
+    public RefreshTokenResponse refreshToken(RefreshTokenRequest refreshTokenRequest) {
 
         String email = jwtService.extractUsername(refreshTokenRequest.refreshToken());
 

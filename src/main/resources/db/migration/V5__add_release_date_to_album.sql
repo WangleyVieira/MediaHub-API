@@ -1,0 +1,5 @@
+ALTER TABLE albums
+ADD COLUMN release_date DATE;
+
+ALTER TABLE albums
+    ADD COLUMN title VARCHAR(150) NOT NULL;

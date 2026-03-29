@@ -1,4 +1,4 @@
-package com.mediahub.mediahub_api.dto;
+package com.mediahub.mediahub_api.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

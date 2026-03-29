@@ -1,7 +1,7 @@
 package com.mediahub.mediahub_api.controller;
 
-import com.mediahub.mediahub_api.dto.CreateUserRequest;
-import com.mediahub.mediahub_api.dto.UserResponse;
+import com.mediahub.mediahub_api.dto.request.CreateUserRequest;
+import com.mediahub.mediahub_api.dto.response.UserResponse;
 import com.mediahub.mediahub_api.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

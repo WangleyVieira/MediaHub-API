@@ -1,4 +1,4 @@
-package com.mediahub.mediahub_api.dto;
+package com.mediahub.mediahub_api.dto.response;
 
 public record RefreshTokenResponse(
         String refreshToken,

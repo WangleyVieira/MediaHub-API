@@ -1,7 +1,7 @@
 package com.mediahub.mediahub_api.service;
 
-import com.mediahub.mediahub_api.dto.CreateUserRequest;
-import com.mediahub.mediahub_api.dto.UserResponse;
+import com.mediahub.mediahub_api.dto.request.CreateUserRequest;
+import com.mediahub.mediahub_api.dto.response.UserResponse;
 import com.mediahub.mediahub_api.model.User;
 import com.mediahub.mediahub_api.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
