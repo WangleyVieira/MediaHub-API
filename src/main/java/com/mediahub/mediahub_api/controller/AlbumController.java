@@ -5,6 +5,8 @@ import com.mediahub.mediahub_api.dto.response.AlbumResponse;
 import com.mediahub.mediahub_api.service.AlbumService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,9 +27,8 @@ public class AlbumController {
     }
 
     @GetMapping("/getAll")
-    public ResponseEntity<List<AlbumResponse>> getAll() {
-        List<AlbumResponse> listAlbums = albumService.getAll();
-        return ResponseEntity.ok(listAlbums);
+    public Page<AlbumResponse> getAll(Pageable pageable) {
+        return albumService.getAll(pageable);
     }
 
     @GetMapping("/find/{id}")

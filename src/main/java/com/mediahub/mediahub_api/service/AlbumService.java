@@ -11,6 +11,8 @@ import com.mediahub.mediahub_api.repository.AlbumRepository;
 import com.mediahub.mediahub_api.repository.UserAlbumRepository;
 import com.mediahub.mediahub_api.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -73,8 +75,8 @@ public class AlbumService {
     }
 
     @Transactional(readOnly = true)
-    public List<AlbumResponse> getAll() {
-        return albumRepository.findAll().stream()
+    public Page<AlbumResponse> getAll(Pageable pageable) {
+        return albumRepository.findAll(pageable)
                 .map(album -> new AlbumResponse(
                         album.getId(),
                         album.getTitle(),
@@ -85,8 +87,7 @@ public class AlbumService {
                                         u.getUser().getName()
                                 ))
                                 .collect(Collectors.toSet())
-                ))
-                .collect(Collectors.toList());
+                ));
     }
 
     @Transactional(readOnly = true)
