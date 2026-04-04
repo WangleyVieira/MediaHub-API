@@ -2,7 +2,6 @@ package com.mediahub.mediahub_api.service;
 
 import com.mediahub.mediahub_api.dto.request.AlbumRequest;
 import com.mediahub.mediahub_api.dto.response.AlbumResponse;
-import com.mediahub.mediahub_api.dto.response.DeleteAlbumResponse;
 import com.mediahub.mediahub_api.dto.response.UserResumeResponse;
 import com.mediahub.mediahub_api.model.Album;
 import com.mediahub.mediahub_api.model.User;
@@ -20,6 +19,7 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,13 +33,7 @@ public class AlbumService {
     @Transactional
     public AlbumResponse create(AlbumRequest albumRequest) {
 
-        Set<User> users = new HashSet<>(
-                userRepository.findAllById(albumRequest.userIds())
-        );
-
-        if (users.size() != albumRequest.userIds().size()) {
-            throw new IllegalArgumentException("One or more user IDs do not match");
-        }
+        Set<User> users = validateUsers(albumRequest.userIds());
 
         Album album = new Album();
         album.setTitle(albumRequest.title());
@@ -49,45 +43,17 @@ public class AlbumService {
 
         Album savedAlbum = albumRepository.save(album);
 
-        for (User user : users) {
-            UserAlbum relation = new UserAlbum();
-            relation.setUser(user);
-            relation.setAlbum(savedAlbum);
-
-            userAlbumRepository.save(relation);
-        }
+        saveUserRelations(savedAlbum, users);
 
         return albumResponse(savedAlbum);
     }
 
-    private AlbumResponse albumResponse(Album album) {
-        return new AlbumResponse(
-                album.getId(),
-                album.getTitle(),
-                album.getReleaseDate(),
-                album.getUserAlbums().stream()
-                        .map(u -> new UserResumeResponse(
-                                u.getUser().getId(),
-                                u.getUser().getName()
-                        ))
-                        .collect(Collectors.toSet())
-        );
-    }
-
     @Transactional(readOnly = true)
     public Page<AlbumResponse> getAll(Pageable pageable) {
-        return albumRepository.findAll(pageable)
-                .map(album -> new AlbumResponse(
-                        album.getId(),
-                        album.getTitle(),
-                        album.getReleaseDate(),
-                        album.getUserAlbums().stream()
-                                .map(u -> new UserResumeResponse(
-                                        u.getUser().getId(),
-                                        u.getUser().getName()
-                                ))
-                                .collect(Collectors.toSet())
-                ));
+
+       Page<Album> page = albumRepository.findAll(pageable);
+
+       return page.map(this::albumResponse);
     }
 
     @Transactional(readOnly = true)
@@ -98,19 +64,7 @@ public class AlbumService {
                         new IllegalArgumentException("Album not found")
                 );
 
-        Set<UserResumeResponse> userIds = album.getUserAlbums().stream()
-                .map(u -> new UserResumeResponse(
-                        u.getUser().getId(),
-                        u.getUser().getName()
-                ))
-                .collect(Collectors.toSet());
-
-        return new AlbumResponse(
-                album.getId(),
-                album.getTitle(),
-                album.getReleaseDate(),
-                userIds
-        );
+        return albumResponse(album);
     }
 
     @Transactional
@@ -128,36 +82,64 @@ public class AlbumService {
         Album album = albumRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Album not found"));
 
-        Set<User> users = new HashSet<>(
-                userRepository.findAllById(albumRequest.userIds())
-        );
-
-        if (users.size() != albumRequest.userIds().size()) {
-            throw new IllegalArgumentException("One or more user IDs do not match");
-        }
+        Set<User> users = validateUsers(albumRequest.userIds());
 
         album.setTitle(albumRequest.title());
         album.setReleaseDate(albumRequest.releaseDate());
         album.setUpdatedAt(LocalDateTime.now());
+
         Album savedAlbum = albumRepository.save(album);
 
+        //remove old relationships
         List<UserAlbum> relations = userAlbumRepository.findByAlbumId(album.getId());
         userAlbumRepository.deleteAll(relations);
 
-        for (User user : users) {
-
-            boolean exists = userAlbumRepository
-                    .existsByUserIdAndAlbumId(user.getId(), savedAlbum.getId());
-
-            if (!exists) {
-                UserAlbum relation = new UserAlbum();
-                relation.setUser(user);
-                relation.setAlbum(savedAlbum);
-
-                userAlbumRepository.save(relation);
-            }
-        }
+        saveUserRelations(savedAlbum, users);
 
         return albumResponse(savedAlbum);
+    }
+
+    // =====================================================
+    // HELPERS
+    // ======================================================
+
+    private AlbumResponse albumResponse(Album album) {
+        Set<UserResumeResponse> users = userAlbumRepository
+                .findByAlbumId(album.getId())
+                .stream()
+                .map(u -> new UserResumeResponse(
+                        u.getUser().getId(),
+                        u.getUser().getName()
+                ))
+                .collect(Collectors.toSet());
+
+        return new AlbumResponse(
+                album.getId(),
+                album.getTitle(),
+                album.getReleaseDate(),
+                users
+        );
+    }
+
+    private Set<User> validateUsers(Set<UUID> userIds) {
+
+        Set<User> users = new HashSet<>(userRepository.findAllById(userIds));
+
+        if (users.size() != userIds.size()) {
+            throw new IllegalArgumentException("One or more user IDs do not match");
+        }
+
+        return users;
+    }
+
+    private void saveUserRelations(Album album, Set<User> users) {
+
+        for (User user : users) {
+            UserAlbum relation = new UserAlbum();
+            relation.setUser(user);
+            relation.setAlbum(album);
+
+            userAlbumRepository.save(relation);
+        }
     }
 }
