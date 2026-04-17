@@ -10,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/v1/albums")
@@ -46,6 +47,15 @@ public class AlbumController {
             @RequestBody @Valid AlbumRequest albumRequest
     ) {
         return ResponseEntity.ok(albumService.update(id, albumRequest));
+    }
+
+    @PostMapping("/{id}/cover")
+    public ResponseEntity<String> uploadCover(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file
+    ) {
+        String url = albumService.uploadCover(id, file);
+        return ResponseEntity.ok(url);
     }
 
 }

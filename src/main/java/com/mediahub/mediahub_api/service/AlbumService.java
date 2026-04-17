@@ -4,16 +4,21 @@ import com.mediahub.mediahub_api.dto.request.AlbumRequest;
 import com.mediahub.mediahub_api.dto.response.AlbumResponse;
 import com.mediahub.mediahub_api.dto.response.UserResumeResponse;
 import com.mediahub.mediahub_api.model.Album;
+import com.mediahub.mediahub_api.model.AlbumCover;
 import com.mediahub.mediahub_api.model.User;
 import com.mediahub.mediahub_api.model.UserAlbum;
+import com.mediahub.mediahub_api.repository.AlbumCoverRepository;
 import com.mediahub.mediahub_api.repository.AlbumRepository;
 import com.mediahub.mediahub_api.repository.UserAlbumRepository;
 import com.mediahub.mediahub_api.repository.UserRepository;
+import com.mediahub.mediahub_api.service.infra.MinioService;
+import com.mediahub.mediahub_api.util.FileValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -29,6 +34,8 @@ public class AlbumService {
     private final AlbumRepository albumRepository;
     private final UserRepository userRepository;
     private final UserAlbumRepository userAlbumRepository;
+    private final AlbumCoverRepository albumCoverRepository;
+    private final MinioService minioService;
 
     @Transactional
     public AlbumResponse create(AlbumRequest albumRequest) {
@@ -99,6 +106,31 @@ public class AlbumService {
         return albumResponse(savedAlbum);
     }
 
+    public String uploadCover(Long albumId, MultipartFile fileCover) {
+
+        FileValidator.validateImage(fileCover);
+
+        Album album = albumRepository.findById(albumId)
+                .orElseThrow(() -> new IllegalArgumentException("Album not found"));
+
+        String url = minioService.uploadFile(fileCover, album.getId());
+
+        // exist cover, remove
+        albumCoverRepository.findByAlbumId(albumId)
+                .ifPresent(albumCoverRepository::delete);
+
+        AlbumCover cover = AlbumCover.builder()
+                .album(album)
+                .fileName(fileCover.getOriginalFilename())
+                .fileUrl(url)
+                .contentType(fileCover.getContentType())
+                .size(fileCover.getSize())
+                .build();
+
+        albumCoverRepository.save(cover);
+        return url;
+    }
+
     // =====================================================
     // HELPERS
     // ======================================================
@@ -142,4 +174,5 @@ public class AlbumService {
             userAlbumRepository.save(relation);
         }
     }
+
 }

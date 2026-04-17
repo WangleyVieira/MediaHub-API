@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8081
 
 spring:
   application:
@@ -37,3 +37,10 @@ security:
     secret: ${JWT_SECRET}
     expiration: ${JWT_EXPIRATION:300000}
     refresh-expiration: ${JWT_REFRESH_EXPIRATION:900000}
+
+minio:
+    url: ${MINIO_URL}
+    public-url: ${MINIO_PUBLIC_URL:http://localhost:9000}
+    access-key: ${MINIO_ACCESS_KEY}
+    secret-key: ${MINIO_SECRET_KEY}
+    bucket: ${MINIO_BUCKET:album-covers}

@@ -23,7 +23,7 @@ public class AuthController {
         return authService.login(loginRequest);
     }
 
-    @PostMapping("refresh")
+    @PostMapping("/refresh")
     public RefreshTokenResponse refreshToken(@RequestBody RefreshTokenRequest refreshTokenRequest) {
         return authService.refreshToken(refreshTokenRequest);
     }
